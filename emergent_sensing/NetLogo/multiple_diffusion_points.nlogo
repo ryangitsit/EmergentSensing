@@ -24,7 +24,7 @@ globals [
   max_density; maximal number of fish per patch
   circle
   ring
-  light_count
+  patch-movement
 ]
 
 
@@ -45,13 +45,21 @@ end
 to setup
   clear-all
 
-    ask patches
+   repeat 350 ; diffuses chemical a specified number of times, each
   [
-    set light 0 ; resets patches' chemical to zero
-
-    ; (below) identifies border patches on edge of screen
-    ;set border? ( pxcor * pycor ) >= ( max-pxcor * max-pycor )
+    diffuse light 0.6 ; patch sharing 20% of its chemical with 8 neighbors
+    ask patch -5 5 [set light 1]
+    ask patch 10 20 [set light 1]
+    ask patch -30 -30 [set light 1]
   ]
+
+  ask patches
+  [
+    set pcolor scale-color yellow light 0 1
+  ]
+
+
+
 
   create-fish population
     [ set color green - 2 + random 7  ;; random shades look nice ?
@@ -64,28 +72,13 @@ to setup
   set flock-width 0
   set flock-alignment 0
   set flock-nnd 0
+  set patch-movement 4
   reset-ticks
 
-  ;set light-eqn
-  let-light
-end
-
-to let-light
-   repeat 500 ; diffuses chemical a specified number of times, each
-  [
-    diffuse light 0.9 ; patch sharing 20% of its chemical with 8 neighbors
-    ask patch -5 5 [set light 1]
-    ask patch 10 20 [set light 1]
-    ask patch -30 -30 [set light 1]
-  ]
-
-  ask patches
-  [
-    set pcolor scale-color yellow light 0 1
-  ]
 end
 
 to go
+
 
   repeat update-freq [
     ask fish [
@@ -113,18 +106,8 @@ end
 
 to avoid-light ;; fish light avoidance
   if any? Patches with[ light > 0] in-cone 1 360
-            [fd (light ) ;turn-away (towards one-of patches with[ light > 0 ]) (light * 100);
-             if ticks > 100
-                 [set light_count light_count + light]]
-                   ;print light_count]]
-             ;print light_count]
+            [fd (light * .005)]
 end
-
-;to avoid-light ;; fish light avoidance
- ; if any? Patches with[ pcolor > 0] in-cone 1 360
-  ;          [fd (pcolor * .005)
-   ;          set light_count light_count + pcolor]]
-;end
 
 to find-flockmates ;; fish procedure
   set flockmates other fish in-cone vision FOV
@@ -365,7 +348,7 @@ population
 population
 1.0
 1000.0
-78.0
+200.0
 1.0
 1
 NIL
@@ -1040,57 +1023,6 @@ setup
 repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
-<experiments>
-  <experiment name="light_count_pop" repetitions="5" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="200"/>
-    <metric>light_count</metric>
-    <enumeratedValueSet variable="max-cohere-turn">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="flock-detection-range">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="noise-stddev">
-      <value value="1.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-separate-turn">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-separation">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed-stddev">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="population">
-      <value value="50"/>
-      <value value="150"/>
-      <value value="250"/>
-      <value value="350"/>
-      <value value="450"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="FOV">
-      <value value="270"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="update-freq">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-vision">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="topo">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-align-turn">
-      <value value="5"/>
-    </enumeratedValueSet>
-  </experiment>
-</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

@@ -24,6 +24,7 @@ globals [
   max_density; maximal number of fish per patch
   circle
   ring
+  light_count
 ]
 
 
@@ -70,52 +71,18 @@ to setup
 end
 
 to let-light
-;    ask patches
-;  [
-;    ifelse ((( pxcor * pxcor + pycor * pycor )) <= 50)
-;    [
-;      set pcolor yellow
-;    ]
-;    [
-;      set pcolor black
-;    ]
-;  ]
-
-  set circle 60
-  set ring 120
-  ask patches
+   repeat 500 ; diffuses chemical a specified number of times, each
   [
-    if (( pxcor * pxcor + pycor * pycor )) <= circle
-    [
-      set pcolor 45
-      set light 1
-    ]
-
-    if (( pxcor * pxcor + pycor * pycor )) > circle and (( pxcor * pxcor + pycor * pycor )) <= circle + ring
-    [
-      set pcolor 44
-      set light 0.8
-    ]
-
-    if (( pxcor * pxcor + pycor * pycor )) > circle + ring and (( pxcor * pxcor + pycor * pycor )) <= circle + ring * 2
-    [
-      set pcolor 43
-      set light 0.7
-    ]
-
-    if ((pxcor * pxcor + pycor * pycor)) > circle + ring * 2 and ((pxcor * pxcor + pycor * pycor )) <= circle + ring * 3
-    [
-      set pcolor 42
-      set light 0.6
-    ]
-
-    if ((pxcor * pxcor + pycor * pycor)) > circle + ring * 3 and ((pxcor * pxcor + pycor * pycor )) <= circle + ring * 4
-    [
-      set pcolor 41
-      set light 0.5
-    ]
+    diffuse light 0.9 ; patch sharing 20% of its chemical with 8 neighbors
+    ask patch -5 5 [set light 1]
+    ask patch 10 20 [set light 1]
+    ask patch -30 -30 [set light 1]
   ]
 
+  ask patches
+  [
+    set pcolor scale-color yellow light 0 1
+  ]
 end
 
 to go
@@ -145,18 +112,19 @@ to flock  ;; fish procedure
 end
 
 to avoid-light ;; fish light avoidance
-  foreach [41 42 43 44 45] [[a] ->
-  if any? Patches with[ pcolor = a] in-cone 1 360
-        [fd speed + (a  / 4000)]]
-;  if any? Patches with[ pcolor = 42] in-cone 1 360
-;      [turn-away (towards one-of patches with[ pcolor = 42 ]) (2)]
-;  if any? Patches with[ pcolor = 43]
-;      [turn-away (towards one-of patches with[ pcolor = yellow ]) (3)]
-;  if any? Patches with[ pcolor = 44]
-;      [turn-away (towards one-of patches with[ pcolor = yellow ]) (4)]
-;  if any? Patches with[ pcolor = 45]
-;      [turn-away (towards one-of patches with[ pcolor = yellow ]) (5)]
+  if any? Patches with[ light > 0] in-cone 1 360
+            [fd (light * 1.25) ;turn-away (towards one-of patches with[ light > 0 ]) (light * 100);
+             if ticks > 100
+                 [set light_count light_count + light]]
+                   ;print light_count]]
+             ;print light_count]
 end
+
+;to avoid-light ;; fish light avoidance
+ ; if any? Patches with[ pcolor > 0] in-cone 1 360
+  ;          [fd (pcolor * .005)
+   ;          set light_count light_count + pcolor]]
+;end
 
 to find-flockmates ;; fish procedure
   set flockmates other fish in-cone vision FOV
@@ -397,7 +365,7 @@ population
 population
 1.0
 1000.0
-200.0
+78.0
 1.0
 1
 NIL
@@ -594,7 +562,7 @@ flock-detection-range
 flock-detection-range
 0
 10
-3.0
+5.0
 1
 1
 NIL
@@ -1072,6 +1040,57 @@ setup
 repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="light_count_pop" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="200"/>
+    <metric>light_count</metric>
+    <enumeratedValueSet variable="max-cohere-turn">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="flock-detection-range">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="noise-stddev">
+      <value value="1.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-separate-turn">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="minimum-separation">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="speed-stddev">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="population">
+      <value value="50"/>
+      <value value="150"/>
+      <value value="250"/>
+      <value value="350"/>
+      <value value="450"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FOV">
+      <value value="270"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="update-freq">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-vision">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="topo">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-align-turn">
+      <value value="5"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
