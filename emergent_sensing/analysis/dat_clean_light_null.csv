@@ -1,0 +1,17 @@
+[run number],1,2,3,4,5,6,7,8
+max-cohere-turn,4,4,4,4,4,4,4,4
+flock-detection-range,3,3,3,3,3,3,3,3
+noise-stddev,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5
+max-separate-turn,2,2,2,2,2,2,2,2
+minimum-separation,1,1,1,1,1,1,1,1
+speed,1,1,1,1,1,1,1,1
+speed-stddev,10,10,10,10,10,10,10,10
+population,1,2,4,8,16,32,64,128
+FOV,270,270,270,270,270,270,270,270
+update-freq,4,4,4,4,4,4,4,4
+max-vision,10,10,10,10,10,10,10,10
+topo,5,5,5,5,5,5,5,5
+max-align-turn,5,5,5,5,5,5,5,5
+[steps],200,200,200,200,200,200,200,200
+[initial & final values],light_count,light_count,light_count,light_count,light_count,light_count,light_count,light_count
+,0,2.4969153993615736,2.141251344768154,2.5994463941161894,2.9208659658068155,6.626117367573809,33.3310518454533,102.68128556704612

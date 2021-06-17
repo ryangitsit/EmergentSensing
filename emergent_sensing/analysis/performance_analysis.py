@@ -5,7 +5,7 @@ import csv
 
 lines = list()
 
-name = "accel_lightspeed_delay"
+name = "turn"
 
 with open(name + '.csv', 'r') as readFile:
     reader = csv.reader(readFile)
@@ -21,18 +21,11 @@ with open('dat_clean_' + name + '.csv', 'w') as writeFile:
 
 perf = pd.read_csv('dat_clean_' + name + '.csv')
 perf["[run number]"][15] = "light_count"
-#print(perf["[run number]"][15])
-
 
 
 perf = perf.set_index('[run number]').transpose() 
 del perf['[initial & final values]']
-# print(list(perf.columns.values))
-# print(perf["light_count"])
-# print(perf)
-# print(perf.population.unique())
-
-
+print(perf)
 
 pops_list = perf.population.unique()
 pops = []
@@ -44,7 +37,7 @@ for i in range(len(perf["population"])):
     perf["population"][i] = int(perf["population"][i])
     perf["light_count"][i] = float(perf["light_count"][i])
 
-light_avg = (perf["light_count"]) / (perf["population"]*(int(perf['[steps]'][1])))
+light_avg = (perf["light_count"]) / (perf["population"]*(int(perf['[steps]'][1])-100))
 
 pops_means = []
 for i in range(len(pops)):
@@ -66,5 +59,4 @@ plt.title("Average Performance Metric Per Group Size (ten runs)")
 plt.xlabel("Population")
 plt.ylabel("Performance (Avg Darkness of Fish and Time)")
 plt.show()
-
 

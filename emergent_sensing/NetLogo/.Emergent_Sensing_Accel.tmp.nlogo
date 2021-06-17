@@ -25,6 +25,7 @@ globals [
   circle
   ring
   light_count
+  patch-movement
 ]
 
 
@@ -44,7 +45,8 @@ end
 
 to setup
   clear-all
-
+  set patch-movement 0
+  set light_count 0
     ask patches
   [
     set light 0 ; resets patches' chemical to zero
@@ -71,9 +73,9 @@ to setup
 end
 
 to let-light
-   repeat 500 ; diffuses chemical a specified number of times, each
+   repeat 7500 ; diffuses chemical a specified number of times, each
   [
-    diffuse light 0.9 ; patch sharing 20% of its chemical with 8 neighbors
+    diffuse light 0.1 ; patch sharing 20% of its chemical with 8 neighbors
     ask patch -5 5 [set light 1]
     ask patch 10 20 [set light 1]
     ask patch -30 -30 [set light 1]
@@ -86,7 +88,7 @@ to let-light
 end
 
 to go
-
+  ;let-light
   repeat update-freq [
     ask fish [
       avoid-light
@@ -112,8 +114,9 @@ to flock  ;; fish procedure
 end
 
 to avoid-light ;; fish light avoidance
-  if any? Patches with[ light > 0] in-cone 1 360
-            [fd (light ) ;turn-away (towards one-of patches with[ light > 0 ]) (light * 100);
+  if any? Patches with[ light > 0.25] in-cone 1 360
+            [fd (light * .5) ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 100);
+             ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 50);
              if ticks > 100
                  [set light_count light_count + light]]
                    ;print light_count]]
@@ -365,7 +368,7 @@ population
 population
 1.0
 1000.0
-78.0
+366.0
 1.0
 1
 NIL
@@ -1041,7 +1044,7 @@ repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="light_count_pop" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="light_count_pop" repetitions="2" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="200"/>
@@ -1068,11 +1071,14 @@ repeat 200 [ go ]
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="population">
-      <value value="50"/>
-      <value value="150"/>
-      <value value="250"/>
-      <value value="350"/>
-      <value value="450"/>
+      <value value="1"/>
+      <value value="2"/>
+      <value value="4"/>
+      <value value="8"/>
+      <value value="16"/>
+      <value value="32"/>
+      <value value="64"/>
+      <value value="128"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="FOV">
       <value value="270"/>
