@@ -106,20 +106,21 @@ to flock  ;; fish procedure
     [ find-nearest-neighbor
       ifelse distance nearest-neighbor < minimum-separation
         [separate]
-        [cohere]
-      align
+        [cohere
+         align]  ; align previously outside of if else statement
+
     ]
   ;; add some noise
   rt random-normal 0 noise-stddev
 end
 
 to avoid-light ;; fish light avoidance
-  if any? Patches with[ light > 0.25] in-cone 1 360
+  if any? Patches with[ light > 0] in-cone 1 360
             [fd (light * .5) ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 100);
              ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 50);
              if ticks > 100
-                 [set light_count light_count + light]]
-                   ;print light_count]]
+                    [set light_count (1 - light)]]
+                   ;print (light)]]
              ;print light_count]
 end
 
@@ -129,16 +130,22 @@ end
    ;          set light_count light_count + pcolor]]
 ;end
 
-to find-flockmates ;; fish procedure
-  set flockmates other fish in-cone vision FOV
-  ;; adjust vision for next update
-  let n count flockmates
-  ifelse n > topo
-    [set vision 0.95 * vision]
-    [set vision 1.05 * vision]
-  set vision min (list vision max-vision)
-
+;metric
+to find-flockmates  ;; turtle procedure
+  set flockmates other turtles in-radius vision
 end
+
+;topological
+;to find-flockmates ;; fish procedure
+ ; set flockmates other fish in-cone vision FOV
+  ;; adjust vision for next update
+ ; let n count flockmates
+  ;ifelse n > topo
+   ; [set vision 0.95 * vision]
+    ;[set vision 1.05 * vision]
+  ;set vision min (list vision max-vision)
+
+;end
 
 to find-nearest-neighbor ;; fish procedure
   set nearest-neighbor min-one-of flockmates [distance myself]
@@ -368,7 +375,7 @@ population
 population
 1.0
 1000.0
-366.0
+1.0
 1.0
 1
 NIL
@@ -383,7 +390,7 @@ max-align-turn
 max-align-turn
 0.0
 20.0
-15.5
+0.25
 0.25
 1
 degrees
@@ -398,7 +405,7 @@ max-cohere-turn
 max-cohere-turn
 0.0
 20.0
-14.75
+12.5
 0.25
 1
 degrees
@@ -413,7 +420,7 @@ max-separate-turn
 max-separate-turn
 0.0
 20.0
-2.0
+1.5
 0.25
 1
 degrees
@@ -428,7 +435,7 @@ max-vision
 max-vision
 0.0
 20.0
-18.5
+10.0
 0.5
 1
 patches
@@ -503,7 +510,7 @@ noise-stddev
 noise-stddev
 0
 5
-1.5
+0.5
 0.1
 1
 degrees
@@ -565,7 +572,7 @@ flock-detection-range
 flock-detection-range
 0
 10
-10.0
+3.0
 1
 1
 NIL
@@ -1044,22 +1051,22 @@ repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="light_count_pop" repetitions="2" runMetricsEveryStep="false">
+  <experiment name="metric_light" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="200"/>
     <metric>light_count</metric>
     <enumeratedValueSet variable="max-cohere-turn">
-      <value value="4"/>
+      <value value="12.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="flock-detection-range">
       <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="noise-stddev">
-      <value value="1.5"/>
+      <value value="0.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="max-separate-turn">
-      <value value="2"/>
+      <value value="1.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="minimum-separation">
       <value value="1"/>
@@ -1093,7 +1100,52 @@ repeat 200 [ go ]
       <value value="5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="max-align-turn">
+      <value value="0.25"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="200"/>
+    <metric>light_count</metric>
+    <enumeratedValueSet variable="max-cohere-turn">
+      <value value="12.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="flock-detection-range">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="noise-stddev">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-separate-turn">
+      <value value="1.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="minimum-separation">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="speed-stddev">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="population">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FOV">
+      <value value="270"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="update-freq">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-vision">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="topo">
       <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-align-turn">
+      <value value="0.25"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>

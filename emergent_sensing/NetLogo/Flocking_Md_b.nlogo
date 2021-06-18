@@ -1,174 +1,66 @@
-;; FlockingTopo_Shape.nlogo
-;;
-;; Flocking model featuring topological interactions
-;; Exploring flock shape
-
-breed [fish piscis]
-
-fish-own [
-  flockmates         ;; agentset of nearby fish
+turtles-own [
+  flockmates         ;; agentset of nearby turtles
   nearest-neighbor   ;; closest one of our flockmates
-  vision             ;; current vision range
-  uxcor              ;; unwrapped in-flock xcor
-  uycor              ;; unwrapped in-flock ycor
 ]
-
-globals [
-  selected-member    ;; analyze the flock of this turtle
-  flock-size
-  flock-length
-  flock-width
-  flock-alignment
-  flock-nnd
-  max_light; maximal value of light
-  max_density; maximal number of fish per patch
-  circle
-  ring
-  light_count
-  patch-movement
-]
-
-
-patches-own
-[
-  light ; amount of light present in patch
-]
-
-to on-analyze-flock
-  if mouse-down? [ ;; select fish closest to mouse coords.
-    set selected-member min-one-of fish [distancexy mouse-xcor mouse-ycor]
-  ]
-  if ticks > 1 [ analyze-flock ]
-end
-
-;----------------------------------------------------------------------
 
 to setup
-  clear-all
-  set patch-movement 0
-  set light_count 0
-    ask patches
-  [
-    set light 0 ; resets patches' chemical to zero
-
-    ; (below) identifies border patches on edge of screen
-    ;set border? ( pxcor * pycor ) >= ( max-pxcor * max-pycor )
-  ]
-
-  create-fish population
-    [ set color green - 2 + random 7  ;; random shades look nice ?
-      set size 1.5  ;; easier to see
-      set vision max-vision
-      setxy random-xcor random-ycor ]
-  set selected-member one-of fish
-  set flock-size 0
-  set flock-length 0
-  set flock-width 0
-  set flock-alignment 0
-  set flock-nnd 0
+  ca
   reset-ticks
-
-  ;set light-eqn
-  let-light
-end
-
-to let-light
-   repeat 7500 ; diffuses chemical a specified number of times, each
-  [
-    diffuse light 0.1 ; patch sharing 20% of its chemical with 8 neighbors
-    ask patch -5 5 [set light 1]
-    ask patch 10 20 [set light 1]
-    ask patch -30 -30 [set light 1]
-  ]
-
-  ask patches
-  [
-    set pcolor scale-color yellow light 0 1
-  ]
+  crt population
+    [ set color yellow - 2 + random 7  ;; random shades look nice
+      set size 1.5  ;; easier to see
+      setxy random-xcor random-ycor ]
 end
 
 to go
-  ;let-light
-  repeat update-freq [
-    ask fish [
-      avoid-light
-      flock
-      fd (random-normal speed (speed * 0.01 * speed-stddev)) / update-freq
-    ]
-    display
-  ]
+  ask turtles [ flock ]
+  ask turtles [ add-error ]
+  ;; the following line is used to make the turtles
+  ;; animate more smoothly.
+  repeat 5 [ ask turtles [ fd 0.2 ] display ]
+  ;; for greater efficiency, at the expense of smooth
+  ;; animation, substitute the following line instead:
+  ;;   ask turtles [ fd 1 ]
   tick
+  do-plots
 end
 
-to flock  ;; fish procedure
+to flock  ;; turtle procedure
   find-flockmates
   if any? flockmates
     [ find-nearest-neighbor
       ifelse distance nearest-neighbor < minimum-separation
-        [separate]
-        [cohere
-         align]  ; align previously outside of if else statement
-
-    ]
-  ;; add some noise
-  rt random-normal 0 noise-stddev
+        [ separate ]
+        [ align
+          cohere ] ]
 end
 
-to avoid-light ;; fish light avoidance
-  if any? Patches with[ light > 0] in-cone 1 360
-            [fd (light * .5) ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 100);
-             ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 50);
-             if ticks > 100
-                    [set light_count (1 - light)]]
-                   ;print (light)]]
-             ;print light_count]
-end
-
-;to avoid-light ;; fish light avoidance
- ; if any? Patches with[ pcolor > 0] in-cone 1 360
-  ;          [fd (pcolor * .005)
-   ;          set light_count light_count + pcolor]]
-;end
-
-;metric
 to find-flockmates  ;; turtle procedure
   set flockmates other turtles in-radius vision
 end
 
-;topological
-;to find-flockmates ;; fish procedure
- ; set flockmates other fish in-cone vision FOV
-  ;; adjust vision for next update
- ; let n count flockmates
-  ;ifelse n > topo
-   ; [set vision 0.95 * vision]
-    ;[set vision 1.05 * vision]
-  ;set vision min (list vision max-vision)
-
-;end
-
-to find-nearest-neighbor ;; fish procedure
+to find-nearest-neighbor ;; turtle procedure
   set nearest-neighbor min-one-of flockmates [distance myself]
 end
 
 ;;; SEPARATE
 
-to separate  ;; fish procedure
-  turn-away ([heading] of nearest-neighbor) max-separate-turn / update-freq
+to separate  ;; turtle procedure
+  turn-away ([heading] of nearest-neighbor) max-separate-turn
 end
 
 ;;; ALIGN
 
-to align  ;; fish procedure
-  turn-towards average-flockmate-heading max-align-turn / update-freq
+to align  ;; turtle procedure
+  turn-towards average-flockmate-heading max-align-turn
 end
 
-to-report average-flockmate-heading  ;; fish procedure
+to-report average-flockmate-heading  ;; turtle procedure
   ;; We can't just average the heading variables here.
   ;; For example, the average of 1 and 359 should be 0,
   ;; not 180.  So we have to use trigonometry.
-  let x-component sum [dx] of flockmates
-  let y-component sum [dy] of flockmates
+  let x-component sum [sin heading] of flockmates
+  let y-component sum [cos heading] of flockmates
   ifelse x-component = 0 and y-component = 0
     [ report heading ]
     [ report atan x-component y-component ]
@@ -176,11 +68,11 @@ end
 
 ;;; COHERE
 
-to cohere  ;; fish procedure
-  turn-towards average-heading-towards-flockmates max-cohere-turn / update-freq
+to cohere  ;; turtle procedure
+  turn-towards average-heading-towards-flockmates max-cohere-turn
 end
 
-to-report average-heading-towards-flockmates  ;; fish procedure
+to-report average-heading-towards-flockmates  ;; turtle procedure
   ;; "towards myself" gives us the heading from the other turtle
   ;; to me, but we want the heading from me to the other turtle,
   ;; so we add 180
@@ -193,11 +85,11 @@ end
 
 ;;; HELPER PROCEDURES
 
-to turn-towards [new-heading max-turn]  ;; fish procedure
+to turn-towards [new-heading max-turn]  ;; turtle procedure
   turn-at-most (subtract-headings new-heading heading) max-turn
 end
 
-to turn-away [new-heading max-turn]  ;; fish procedure
+to turn-away [new-heading max-turn]  ;; turtle procedure
   turn-at-most (subtract-headings heading new-heading) max-turn
 end
 
@@ -211,108 +103,68 @@ to turn-at-most [turn max-turn]  ;; turtle procedure
     [ rt turn ]
 end
 
-;;; FLOCK ANALYZE PROCEDURES
 
-;; cosmetic
-to reset-colors
-  ask fish [set color yellow - 2 + random 7]
-end
+;;; 3b
 
-;; entry point flock analysis
-to analyze-flock
-  let S flock-detection (turtle-set selected-member)
-  ask fish [set color yellow]
-  ask S [set color red]
-  display
-  ;; perform 'analysis'
-  calculate-length-width-align S
-end
-
-to calculate-length-width-align [S]
-  ;; calculate flock forward direction
-  let fx sum [dx] of S
-  let fy sum [dy] of S
-  let flen sqrt(fx * fx + fy * fy)
-  set fx fx / flen
-  set fy fy / flen
-
-  ;; transform (unwraped) coordinates to local coordinate system
-  ask S [unwrap-coordinates]
-  let xproj [uxcor * fx + uycor * fy] of S     ;; dot
-  let yproj [uxcor * fy - uycor * fx] of S     ;; perp dot
-
-  set flock-size count S
-  set flock-length (max xproj) - (min xproj)
-  set flock-width (max yproj) - (min yproj)
-  set flock-alignment flen / flock-size
-  set flock-nnd average-nnd S
-end
-
-;; this is simply horrible ;)
-to unwrap-coordinates ;; fish procedure
-  ifelse self != selected-member [
-    let h towards selected-member + 180
-    let d distance selected-member
-    set uxcor d * sin h
-    set uycor d * cos h
-  ] [
-  set uxcor 0
-  set uycor 0
-  ]
-end
-
-to-report average-nnd [S]
-  let nnd 0
-  let n 0
-  ask S [
-    if any? flockmates [
-      set nnd nnd + distance nearest-neighbor
-      set n n + 1
-    ]
-  ]
-  report nnd / n
-end
-
-to-report length-width-ratio
-  report flock-length / flock-width
+to add-error
+  let err ((-0.5 + random-float 1) * Noise)
+  set heading heading + err;
 end
 
 
-;;; FLOCK DETECTION PROCEDURES
+;;; 3a
+;;; heading 0 is north (y-axis), heading 90 is east (x-axis) -> 90 Deg rotated coor-system
 
-;; flock detection; slow recursive algorithm:
-;; - all fish in S are members of the flock
-;; - all flockmates in the flock-detection-range of a member of the flock are members
-;; the hard work is delegates to 'turtle-set'
-to-report flock-detection [S]
-  let res S
-  ask S [
-    let fdr other fish in-radius flock-detection-range
-    if any? fdr [
-      let n count res
-      set res (turtle-set res fdr)
-      if n < count res [
-        set res flock-detection res  ;; recursion
-      ]
-    ]
-  ]
-  report res
+
+;; reports average heading (0..360) [deg]
+to-report average-dir
+  let x mean [sin heading] of turtles
+  let y mean [cos heading] of turtles
+  ifelse x = 0 and y = 0
+    [ report 0 ]
+    [ report atan x y ]
 end
 
 
-;;
+;;; NetLogos heading is (0..360) deg. However 'deviation' in heading is (0..180) deg,
+;;; we are looking for the smalest angle between headings -> use dot product.
+;;; Note that NetLogo has a procedure "subtract-heading" that to the job.
+;;; But let's be explicit here
 
-; Copyright 1998 Uri Wilensky.
-; See Info tab for full copyright and license.
+
+;; reports the dot product of my heading and h (-1..1)
+to-report heading-dot [h]        ;; turtle procedure
+  let x1 sin(heading)
+  let y1 cos(heading)
+  let x2 sin(h)
+  let y2 cos(h)
+  report x1 * x2 + y1 * y2
+end
+
+
+;; reports deviation in heading (0..180) [deg]
+to-report mean-heading-dev
+  report acos( mean [heading-dot average-dir] of turtles )
+end
+
+
+to do-plots
+  set-current-plot "Disorder"
+  plotxy ticks mean-heading-dev
+end
+
+
+; Copyright 1998 Uri Wilensky. All rights reserved.
+; The full copyright notice is in the Information tab.
 @#$#@#$#@
 GRAPHICS-WINDOW
 250
-0
-790
-541
+10
+755
+516
 -1
 -1
-7.5
+7.0
 1
 10
 1
@@ -333,10 +185,10 @@ ticks
 30.0
 
 BUTTON
-38
-53
-115
-86
+39
+93
+116
+126
 NIL
 setup
 NIL
@@ -350,10 +202,10 @@ NIL
 1
 
 BUTTON
-125
-52
-206
-85
+122
+93
+203
+126
 NIL
 go
 T
@@ -367,55 +219,55 @@ NIL
 1
 
 SLIDER
-12
-10
-235
-43
+9
+51
+232
+84
 population
 population
 1.0
 1000.0
-128.0
+300.0
 1.0
 1
 NIL
 HORIZONTAL
 
 SLIDER
-11
-294
-235
-327
+4
+217
+237
+250
 max-align-turn
 max-align-turn
 0.0
 20.0
-0.25
+5.0
 0.25
 1
 degrees
 HORIZONTAL
 
 SLIDER
-11
-328
-236
-361
+4
+251
+237
+284
 max-cohere-turn
 max-cohere-turn
 0.0
 20.0
-12.5
+3.0
 0.25
 1
 degrees
 HORIZONTAL
 
 SLIDER
-11
-362
-235
-395
+4
+285
+237
+318
 max-separate-turn
 max-separate-turn
 0.0
@@ -427,25 +279,25 @@ degrees
 HORIZONTAL
 
 SLIDER
-12
-94
-235
-127
-max-vision
-max-vision
+9
+135
+232
+168
+vision
+vision
 0.0
-20.0
 10.0
+3.0
 0.5
 1
 patches
 HORIZONTAL
 
 SLIDER
-12
-176
-235
-209
+9
+169
+232
+202
 minimum-separation
 minimum-separation
 0.0
@@ -456,205 +308,38 @@ minimum-separation
 patches
 HORIZONTAL
 
-SLIDER
-9
-451
-236
-484
-speed-stddev
-speed-stddev
-0
-100
+PLOT
+800
+20
+1151
+170
+Disorder
+Time
+[deg]
+0.0
 10.0
-1
-1
-% of speed
-HORIZONTAL
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" ""
 
 SLIDER
-9
-510
-236
-543
-update-freq
-update-freq
-1
-10
-4.0
-1
-1
-1/ticks
-HORIZONTAL
-
-SLIDER
-12
-210
-235
-243
-FOV
-FOV
+28
+372
+200
+405
+Noise
+Noise
 0
-360
-270.0
-10
+90
+15.0
 1
-degrees
+1
+Deg
 HORIZONTAL
-
-SLIDER
-9
-414
-236
-447
-noise-stddev
-noise-stddev
-0
-5
-0.5
-0.1
-1
-degrees
-HORIZONTAL
-
-SLIDER
-12
-130
-235
-163
-topo
-topo
-1
-100
-5.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-12
-244
-235
-277
-speed
-speed
-0
-2
-1.0
-0.1
-1
-patches/tick
-HORIZONTAL
-
-BUTTON
-804
-10
-952
-43
-analyze selected flock
-on-analyze-flock
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-805
-56
-951
-89
-flock-detection-range
-flock-detection-range
-0
-10
-3.0
-1
-1
-NIL
-HORIZONTAL
-
-MONITOR
-805
-148
-917
-193
-NIL
-length-width-ratio
-2
-1
-11
-
-MONITOR
-805
-99
-917
-144
-NIL
-flock-size
-17
-1
-11
-
-MONITOR
-805
-196
-917
-241
-NIL
-flock-alignment
-5
-1
-11
-
-BUTTON
-955
-10
-1022
-43
-NIL
-reset-colors
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-MONITOR
-805
-245
-917
-290
-NIL
-flock-nnd
-2
-1
-11
-
-BUTTON
-260
-617
-323
-650
-NIL
-NIL
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -707,7 +392,7 @@ Will running the model for a long time produce a static flock?  Or will the bird
 
 ## EXTENDING THE MODEL
 
-Currently the birds can "see" all around them.  What happens if birds can only see in front of them?  The `in-cone` primitive can be used for this.
+Currently the birds can "see" all around them.  What happens if birds can only see in front of them?  The IN-CONE primitive can be used for this.
 
 Is there some way to get V-shaped flocks, like migrating geese?
 
@@ -721,13 +406,12 @@ Are there other interesting ways you can make the birds different from each othe
 
 ## NETLOGO FEATURES
 
-Notice the need for the `subtract-headings` primitive and special procedure for averaging groups of headings.  Just subtracting the numbers, or averaging the numbers, doesn't give you the results you'd expect, because of the discontinuity where headings wrap back to 0 once they reach 360.
+Notice the need for the SUBTRACT-HEADINGS primitive and special procedure for averaging groups of headings.  Just subtracting the numbers, or averaging the numbers, doesn't give you the results you'd expect, because of the discontinuity where headings wrap back to 0 once they reach 360.
 
 ## RELATED MODELS
 
-* Moths
-* Flocking Vee Formation
-* Flocking - Alternative Visualizations
+Moths  
+Flocking Vee Formation
 
 ## CREDITS AND REFERENCES
 
@@ -735,31 +419,24 @@ This model is inspired by the Boids simulation invented by Craig Reynolds.  The 
 
 ## HOW TO CITE
 
-If you mention this model or the NetLogo software in a publication, we ask that you include the citations below.
+If you mention this model in an academic publication, we ask that you include these citations for the model itself and for the NetLogo software:  
+- Wilensky, U. (1998).  NetLogo Flocking model.  http://ccl.northwestern.edu/netlogo/models/Flocking.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.  
+- Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
 
-For the model itself:
+In other publications, please use:  
+- Copyright 1998 Uri Wilensky. All rights reserved. See http://ccl.northwestern.edu/netlogo/models/Flocking for terms of use.
 
-* Wilensky, U. (1998).  NetLogo Flocking model.  http://ccl.northwestern.edu/netlogo/models/Flocking.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+## COPYRIGHT NOTICE
 
-Please cite the NetLogo software as:
+Copyright 1998 Uri Wilensky. All rights reserved.
 
-* Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
-
-## COPYRIGHT AND LICENSE
-
-Copyright 1998 Uri Wilensky.
-
-![CC BY-NC-SA 3.0](http://ccl.northwestern.edu/images/creativecommons/byncsa.png)
-
-This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License.  To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
-
-Commercial licenses are also available. To inquire about commercial licenses, please contact Uri Wilensky at uri@northwestern.edu.
+Permission to use, modify or redistribute this model is hereby granted, provided that both of the following requirements are followed:  
+a) this copyright notice is included.  
+b) this model will not be redistributed for profit without permission from Uri Wilensky. Contact Uri Wilensky for appropriate licenses for redistribution for profit.
 
 This model was created as part of the project: CONNECTED MATHEMATICS: MAKING SENSE OF COMPLEX PHENOMENA THROUGH BUILDING OBJECT-BASED PARALLEL MODELS (OBPML).  The project gratefully acknowledges the support of the National Science Foundation (Applications of Advanced Technologies Program) -- grant numbers RED #9552950 and REC #9632612.
 
 This model was converted to NetLogo as part of the projects: PARTICIPATORY SIMULATIONS: NETWORK-BASED DESIGN FOR SYSTEMS LEARNING IN CLASSROOMS and/or INTEGRATED SIMULATION AND MODELING ENVIRONMENT. The project gratefully acknowledges the support of the National Science Foundation (REPP & ROLE programs) -- grant numbers REC #9814682 and REC-0126227. Converted from StarLogoT to NetLogo, 2002.
-
-<!-- 1998 2002 -->
 @#$#@#$#@
 default
 true
@@ -1043,112 +720,13 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.1.1
 @#$#@#$#@
 set population 200
 setup
 repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
-<experiments>
-  <experiment name="metric_light" repetitions="10" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="200"/>
-    <metric>light_count</metric>
-    <enumeratedValueSet variable="max-cohere-turn">
-      <value value="12.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="flock-detection-range">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="noise-stddev">
-      <value value="0.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-separate-turn">
-      <value value="1.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-separation">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed-stddev">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="population">
-      <value value="1"/>
-      <value value="2"/>
-      <value value="4"/>
-      <value value="8"/>
-      <value value="16"/>
-      <value value="32"/>
-      <value value="64"/>
-      <value value="128"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="FOV">
-      <value value="270"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="update-freq">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-vision">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="topo">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-align-turn">
-      <value value="0.25"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="200"/>
-    <metric>light_count</metric>
-    <enumeratedValueSet variable="max-cohere-turn">
-      <value value="12.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="flock-detection-range">
-      <value value="3"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="noise-stddev">
-      <value value="0.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-separate-turn">
-      <value value="1.5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="minimum-separation">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed-stddev">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="population">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="FOV">
-      <value value="270"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="update-freq">
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-vision">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="topo">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="max-align-turn">
-      <value value="0.25"/>
-    </enumeratedValueSet>
-  </experiment>
-</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
