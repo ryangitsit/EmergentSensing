@@ -5,7 +5,7 @@ import csv
 
 lines = list()
 
-name = "metric_model6"
+name = "new_method_dark"
 
 with open(name + '.csv', 'r') as readFile:
     reader = csv.reader(readFile)
@@ -38,7 +38,43 @@ with open('dat_mat_' + name + '.csv', 'w') as writeFile:
 
 
 
-perf = pd.read_csv('dat_mat_' + name + '.csv')
+param = pd.read_csv('dat_clean_' + name + '.csv')
+
+param = param.set_index('[run number]').transpose() 
+#del perf['[initial & final values]']
+print(len(param['population']))
+
+
+
+total_runs = len(param['population'])
+headers = np.arange(1, total_runs + 1, 1)
+for h in headers:
+    h = str(h)
+
+
+
+print (headers)
+
+dat = pd.read_csv('dat_mat_' + name + '.csv', names=headers)
+
+for i in headers:
+    print(np.mean(dat[i]))
+
+exps = []
+for exp in range(8):
+    runs = []
+    for run in range(1,11):
+        runs.append(np.mean(np.mean(dat[exp*10+run])*2))
+    exps.append(np.mean(runs))
+
+
+plt.plot(exps)
+plt.show()
+
+
+for run in range(1,10):
+    print (run)
+
 
 
 # perf = pd.read_csv('dat_clean_' + name + '.csv')

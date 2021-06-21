@@ -89,6 +89,9 @@ end
 
 to go
   ;let-light
+  ;print light_count
+  ;set light_count 0
+
   repeat update-freq [
     ask fish [
       avoid-light
@@ -115,11 +118,11 @@ to flock  ;; fish procedure
 end
 
 to avoid-light ;; fish light avoidance
-  if any? Patches with[ light > 0] in-cone 1 360
-            [fd (light * .5) ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 100);
-             ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 50);
-             if ticks > 100
-                    [set light_count (1 - light)]]
+  ;if any? Patches with[ light > 0] in-cone 1 360
+   ;fd (light * .5) ;turn-away (towards one-of patches with[ light > 0.5 ]) (light * 100);
+   turn-away (towards one-of patches with[ light > 0.25 ]) (light * 2);
+   if ticks > 99
+      [set light_count light_count + (.25 * (1 - light))]
                    ;print (light)]]
              ;print light_count]
 end
@@ -375,7 +378,7 @@ population
 population
 1.0
 1000.0
-128.0
+256.0
 1.0
 1
 NIL
@@ -1051,7 +1054,7 @@ repeat 200 [ go ]
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="metric_light" repetitions="10" runMetricsEveryStep="true">
+  <experiment name="metric_light" repetitions="10" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="200"/>
@@ -1086,6 +1089,7 @@ repeat 200 [ go ]
       <value value="32"/>
       <value value="64"/>
       <value value="128"/>
+      <value value="256"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="FOV">
       <value value="270"/>
